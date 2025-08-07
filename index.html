@@ -205,6 +205,99 @@
     function debugInfo() {
       console.log("Información de debug no definida en este contexto.");
     }
+
+    // Función para verificar si el modal está visible
+    function checkModalVisibility() {
+        console.log('=== VERIFICANDO VISIBILIDAD DEL MODAL ===');
+        
+        // Buscar elementos comunes de Niubiz
+        const possibleSelectors = [
+          '[id*="niubiz"]',
+          '[class*="niubiz"]',
+          '[id*="visanet"]',
+          '[class*="visanet"]',
+          '[id*="checkout"]',
+          '[class*="checkout"]',
+          'iframe[src*="niubiz"]',
+          'iframe[src*="visanet"]',
+          '.modal',
+          '.overlay',
+          '[style*="z-index"]'
+        ];
+        
+        let modalFound = false;
+        
+        possibleSelectors.forEach(selector => {
+          const elements = document.querySelectorAll(selector);
+          if (elements.length > 0) {
+            console.log(`Encontrados ${elements.length} elementos con selector: ${selector}`);
+            elements.forEach((el, index) => {
+              console.log(`  Elemento ${index + 1}:`, {
+                tagName: el.tagName,
+                id: el.id,
+                className: el.className,
+                style: el.style.cssText,
+                display: window.getComputedStyle(el).display,
+                visibility: window.getComputedStyle(el).visibility,
+                zIndex: window.getComputedStyle(el).zIndex,
+                position: window.getComputedStyle(el).position
+              });
+              
+              // Intentar hacer visible si está oculto
+              if (window.getComputedStyle(el).display === 'none' || 
+                  window.getComputedStyle(el).visibility === 'hidden') {
+                console.log('Intentando hacer visible el elemento...');
+                el.style.display = 'block !important';
+                el.style.visibility = 'visible !important';
+                el.style.zIndex = '999999 !important';
+                el.style.position = 'fixed !important';
+              }
+              
+              modalFound = true;
+            });
+          }
+        });
+        
+        if (!modalFound) {
+          console.log('❌ No se encontró ningún modal de Niubiz visible');
+          console.log('Intentando abrir nuevamente...');
+          
+          // Mostrar botón manual
+          showManualButton();
+        } else {
+          console.log('✅ Modal encontrado');
+        }
+    }
+    
+    // Función para mostrar botón manual
+    function showManualButton() {
+        const manualButtonContainer = document.getElementById('manual-button-container');
+        if (manualButtonContainer) {
+          manualButtonContainer.style.display = 'block';
+        }
+    }
+
+    // Función para forzar la visibilidad del modal
+    function forceShowModal() {
+        console.log('Buscando y forzando visibilidad de modales...');
+
+        // Buscar el modal
+        const modal = document.querySelector('[id*="checkout"], [class*="checkout"]');
+
+        if (modal) {
+            console.log('Modal encontrado, forzando visibilidad...');
+            
+            // Forzar visibilidad
+            modal.style.display = 'block';
+            modal.style.visibility = 'visible';
+            modal.style.zIndex = '999999'; // Asegurarse de que esté por encima de otros elementos
+            modal.style.position = 'fixed';
+            modal.style.top = '50px';
+            modal.style.left = '50px';
+        } else {
+            console.log('No se encontró el modal.');
+        }
+    }
   </script>
   
   <!-- Cargar el script de Niubiz después de definir la función -->
