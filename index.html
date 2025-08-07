@@ -22,14 +22,25 @@
     data-showamount="TRUE"
   >
   </form>
+
   <script>
-    // Leer parámetros de la URL
-    const params = new URLSearchParams(window.location.search);
-    document.getElementById('checkoutForm').setAttribute('data-sessiontoken', params.get('sessionToken') || '');
-    document.getElementById('checkoutForm').setAttribute('data-purchasenumber', params.get('purchaseNumber') || '');
-    document.getElementById('checkoutForm').setAttribute('data-amount', params.get('amount') || '');
-    // Llama al formulario de Niubiz
-    Checkout.open();
+    // Función que se ejecuta cuando el script de Niubiz se ha cargado
+    window.onload = function() {
+      // Leer parámetros de la URL
+      const params = new URLSearchParams(window.location.search);
+
+      // Establecer los atributos del formulario con los parámetros de la URL
+      document.getElementById('checkoutForm').setAttribute('data-sessiontoken', params.get('sessionToken') || '');
+      document.getElementById('checkoutForm').setAttribute('data-purchasenumber', params.get('purchaseNumber') || '');
+      document.getElementById('checkoutForm').setAttribute('data-amount', params.get('amount') || '');
+
+      // Esperar a que el script de Checkout se haya cargado antes de llamarlo
+      if (typeof Checkout !== 'undefined') {
+        Checkout.open();
+      } else {
+        console.error('El objeto Checkout no está definido. Verifica si el script de Niubiz se cargó correctamente.');
+      }
+    };
   </script>
 </body>
 </html>
