@@ -15,33 +15,34 @@
           return;
         }
 
-        const sessiontoken = params.get('sessiontoken') || '';
-        const purchasenumber = params.get('purchasenumber') || '';
-        const amount = params.get('amount') || '';
-
-        // Verificar que los parámetros estén presentes
-        if (!sessiontoken || !purchasenumber || !amount) {
-          console.error('ERROR: Faltan parámetros en la URL');
-          return;
-        }
-
         // Establecer los atributos del formulario con los parámetros de la URL
-        checkoutForm.setAttribute('data-sessiontoken', sessiontoken);
-        checkoutForm.setAttribute('data-purchasenumber', purchasenumber);
-        checkoutForm.setAttribute('data-amount', amount);
+        checkoutForm.setAttribute('data-sessiontoken', params.get('sessiontoken') || '');
+        checkoutForm.setAttribute('data-purchasenumber', params.get('purchasenumber') || '');
+        checkoutForm.setAttribute('data-amount', params.get('amount') || '');
+        checkoutForm.setAttribute('data-channel', 'web'); // Valor fijo o desde URL
+        checkoutForm.setAttribute('data-currency', 'PEN'); // Valor fijo o desde URL
 
-        const merchantId = checkoutForm.getAttribute('data-merchantid');
-        const action = checkoutForm.getAttribute('action');
-
-        if (!action || !merchantId || !sessiontoken || !purchasenumber || !amount) {
-          console.error('ERROR: Faltan parámetros importantes');
-          return;
+        // Validar que los parámetros obligatorios estén presentes
+        const requiredParams = ['sessiontoken', 'purchasenumber', 'amount'];
+        for (const param of requiredParams) {
+          if (!params.get(param)) {
+            console.error(`ERROR: Falta el parámetro ${param}`);
+            return;
+          }
         }
 
         // Intentar abrir el formulario
         if (typeof VisanetCheckout !== 'undefined') {
           console.log('Abriendo VisanetCheckout...');
-          VisanetCheckout.open();
+          VisanetCheckout.open({
+          action: checkoutForm.getAttribute('action'),
+          merchantid: checkoutForm.getAttribute('data-merchantid'),
+          sessiontoken: checkoutForm.getAttribute('data-sessiontoken'),
+          amount: checkoutForm.getAttribute('data-amount'),
+          purchasenumber: checkoutForm.getAttribute('data-purchasenumber'),
+          channel: 'web',
+          currency: 'PEN'
+        });
           setTimeout(() => checkModalVisibility(), 1000);
         } else {
           console.error('VisanetCheckout no está definido');
@@ -96,6 +97,7 @@
     data-merchantid="456879852"
     data-purchasenumber=""
     data-amount=""
+    data-currency="PEN"
     data-expirationminutes="10"
     data-timeouturl="https://www.tuweb.com/timeout"
     data-merchantlogo="https://www.tuweb.com/logo.png"
