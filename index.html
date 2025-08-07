@@ -73,24 +73,118 @@
         if (typeof VisanetCheckout !== 'undefined') {
           console.log('Objeto VisanetCheckout encontrado, abriendo formulario...');
           try {
+            // Ocultar el spinner de carga
+            const loadingSpinner = document.getElementById('loading-spinner');
+            if (loadingSpinner) {
+              loadingSpinner.style.display = 'none';
+            }
+            
+            // Abrir el checkout
             VisanetCheckout.open();
             console.log('Formulario de pago abierto exitosamente');
+            
+            // Verificar si el modal está visible después de un momento
+            setTimeout(() => {
+              checkModalVisibility();
+            }, 1000);
+            
           } catch (error) {
             console.error('Error al abrir VisanetCheckout:', error);
           }
         } else if (typeof Checkout !== 'undefined') {
           console.log('Objeto Checkout encontrado, abriendo formulario...');
           try {
+            const loadingSpinner = document.getElementById('loading-spinner');
+            if (loadingSpinner) {
+              loadingSpinner.style.display = 'none';
+            }
+            
             Checkout.open();
             console.log('Formulario de pago abierto exitosamente');
+            
+            setTimeout(() => {
+              checkModalVisibility();
+            }, 1000);
+            
           } catch (error) {
             console.error('Error al abrir Checkout:', error);
           }
         } else {
           console.error('Ningún objeto de checkout está definido.');
-          // Debug: mostrar qué objetos están disponibles
           console.log('Objetos disponibles en window:', Object.keys(window).filter(key => key.toLowerCase().includes('checkout')));
         }
+      }
+      
+      // Función para verificar si el modal está visible
+      function checkModalVisibility() {
+        console.log('=== VERIFICANDO VISIBILIDAD DEL MODAL ===');
+        
+        // Buscar elementos comunes de Niubiz
+        const possibleSelectors = [
+          '[id*="niubiz"]',
+          '[class*="niubiz"]',
+          '[id*="visanet"]',
+          '[class*="visanet"]',
+          '[id*="checkout"]',
+          '[class*="checkout"]',
+          'iframe[src*="niubiz"]',
+          'iframe[src*="visanet"]',
+          '.modal',
+          '.overlay',
+          '[style*="z-index"]'
+        ];
+        
+        let modalFound = false;
+        
+        possibleSelectors.forEach(selector => {
+          const elements = document.querySelectorAll(selector);
+          if (elements.length > 0) {
+            console.log(`Encontrados ${elements.length} elementos con selector: ${selector}`);
+            elements.forEach((el, index) => {
+              console.log(`  Elemento ${index + 1}:`, {
+                tagName: el.tagName,
+                id: el.id,
+                className: el.className,
+                style: el.style.cssText,
+                display: window.getComputedStyle(el).display,
+                visibility: window.getComputedStyle(el).visibility,
+                zIndex: window.getComputedStyle(el).zIndex,
+                position: window.getComputedStyle(el).position
+              });
+              
+              // Intentar hacer visible si está oculto
+              if (window.getComputedStyle(el).display === 'none' || 
+                  window.getComputedStyle(el).visibility === 'hidden') {
+                console.log('Intentando hacer visible el elemento...');
+                el.style.display = 'block !important';
+                el.style.visibility = 'visible !important';
+                el.style.zIndex = '999999 !important';
+                el.style.position = 'fixed !important';
+              }
+              
+              modalFound = true;
+            });
+          }
+        });
+        
+        if (!modalFound) {
+          console.log('❌ No se encontró ningún modal de Niubiz visible');
+          console.log('Intentando abrir nuevamente...');
+          
+          // Mostrar botón manual
+          showManualButton();
+        } else {
+          console.log('✅ Modal encontrado');
+        }
+      }
+      
+      // Función para mostrar botón manual
+      function showManualButton() {
+        const manualButtonContainer = document.getElementById('manual-button-container');
+        if (manualButtonContainer) {
+          manualButtonContainer.style.display = 'block';
+        }
+      }
       }
       
       // Verificar si el DOM ya está listo
@@ -140,6 +234,22 @@
   >
   </form>
   
+  <!-- Botón manual para abrir checkout -->
+  <div id="manual-button-container" style="display: none; margin-top: 20px; text-align: center; padding: 20px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px;">
+    <h3>¿No se abrió el formulario de pago?</h3>
+    <p>Haz clic en el botón para abrir manualmente:</p>
+    <button onclick="openCheckoutManually()" style="background: #007bff; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;">
+      🏦 Abrir Formulario de Pago
+    </button>
+    <br><br>
+    <button onclick="forceShowModal()" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 3px; margin: 5px;">
+      🔍 Buscar Modal Oculto
+    </button>
+    <button onclick="debugElements()" style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 3px; margin: 5px;">
+      🐛 Debug Elementos
+    </button>
+  </div>
+  
   <!-- Debug info -->
   <div id="debug-info" style="margin-top: 20px; padding: 10px; background: #f5f5f5; border-radius: 4px;">
     <h3>Estado del proceso:</h3>
@@ -166,23 +276,130 @@
       }
     }
     
-    // Función de debug manual
-    function debugInfo() {
-      console.log('=== DEBUG MANUAL ===');
-      console.log('URL completa:', window.location.href);
-      console.log('Parámetros URL:', Object.fromEntries(new URLSearchParams(window.location.search)));
-      console.log('Formulario encontrado:', !!document.getElementById('checkoutForm'));
-      console.log('VisanetCheckout disponible:', typeof VisanetCheckout !== 'undefined');
-      console.log('Checkout disponible:', typeof Checkout !== 'undefined');
-      
-      const form = document.getElementById('checkoutForm');
-      if (form) {
-        console.log('Atributos del formulario:');
-        console.log('- data-sessiontoken:', form.getAttribute('data-sessiontoken'));
-        console.log('- data-purchasenumber:', form.getAttribute('data-purchasenumber'));
-        console.log('- data-amount:', form.getAttribute('data-amount'));
-        console.log('- data-merchantid:', form.getAttribute('data-merchantid'));
+    // Función para abrir checkout manualmente
+    function openCheckoutManually() {
+      console.log('Intentando abrir checkout manualmente...');
+      try {
+        if (typeof VisanetCheckout !== 'undefined') {
+          VisanetCheckout.open();
+          setTimeout(checkModalVisibility, 500);
+        } else if (typeof Checkout !== 'undefined') {
+          Checkout.open();
+          setTimeout(checkModalVisibility, 500);
+        }
+      } catch (error) {
+        console.error('Error al abrir manualmente:', error);
       }
+    }
+    
+    // Función para forzar la visibilidad del modal
+    function forceShowModal() {
+      console.log('Buscando y forzando visibilidad de modales...');
+      
+      // Seleccionar todos los elementos que podrían ser el modal
+      const allElements = document.querySelectorAll('*');
+      let modalCandidates = [];
+      
+      allElements.forEach(el => {
+        const style = window.getComputedStyle(el);
+        const rect = el.getBoundingClientRect();
+        
+        // Buscar elementos que podrían ser modales
+        if (
+          (style.position === 'fixed' || style.position === 'absolute') &&
+          (style.zIndex > 1000 || 
+           el.className.includes('modal') || 
+           el.className.includes('overlay') ||
+           el.className.includes('checkout') ||
+           el.id.includes('niubiz') ||
+           el.id.includes('visanet'))
+        ) {
+          modalCandidates.push({
+            element: el,
+            display: style.display,
+            visibility: style.visibility,
+            zIndex: style.zIndex,
+            className: el.className,
+            id: el.id
+          });
+        }
+      });
+      
+      console.log('Candidatos a modal encontrados:', modalCandidates);
+      
+      modalCandidates.forEach((candidate, index) => {
+        console.log(`Candidato ${index + 1}:`, candidate);
+        
+        // Forzar visibilidad
+        const el = candidate.element;
+        el.style.display = 'block !important';
+        el.style.visibility = 'visible !important';
+        el.style.opacity = '1 !important';
+        el.style.zIndex = '999999 !important';
+        el.style.position = 'fixed !important';
+        el.style.top = '50px !important';
+        el.style.left = '50px !important';
+        el.style.background = 'white !important';
+        el.style.border = '2px solid red !important';
+      });
+      
+      if (modalCandidates.length === 0) {
+        console.log('❌ No se encontraron candidatos a modal');
+        alert('No se encontró el modal de Niubiz. Verifica que el sessionToken sea válido.');
+      }
+    }
+    
+    // Función para debug detallado de elementos
+    function debugElements() {
+      console.log('=== DEBUG DETALLADO DE ELEMENTOS ===');
+      
+      // Información del documento
+      console.log('Document info:', {
+        title: document.title,
+        url: document.URL,
+        scripts: Array.from(document.scripts).map(s => s.src),
+        iframes: Array.from(document.iframes || []).map(i => i.src)
+      });
+      
+      // Buscar iframes
+      const iframes = document.querySelectorAll('iframe');
+      console.log(`Iframes encontrados: ${iframes.length}`);
+      iframes.forEach((iframe, index) => {
+        console.log(`Iframe ${index + 1}:`, {
+          src: iframe.src,
+          style: iframe.style.cssText,
+          display: window.getComputedStyle(iframe).display,
+          visibility: window.getComputedStyle(iframe).visibility
+        });
+        
+        // Hacer visible si está oculto
+        iframe.style.display = 'block !important';
+        iframe.style.visibility = 'visible !important';
+        iframe.style.position = 'fixed !important';
+        iframe.style.top = '100px !important';
+        iframe.style.left = '100px !important';
+        iframe.style.width = '800px !important';
+        iframe.style.height = '600px !important';
+        iframe.style.zIndex = '999999 !important';
+        iframe.style.border = '3px solid blue !important';
+      });
+      
+      // Buscar elementos con z-index alto
+      const highZElements = Array.from(document.querySelectorAll('*')).filter(el => {
+        const zIndex = parseInt(window.getComputedStyle(el).zIndex);
+        return zIndex > 1000;
+      });
+      
+      console.log(`Elementos con z-index > 1000: ${highZElements.length}`);
+      highZElements.forEach((el, index) => {
+        console.log(`Elemento z-index alto ${index + 1}:`, {
+          tagName: el.tagName,
+          id: el.id,
+          className: el.className,
+          zIndex: window.getComputedStyle(el).zIndex,
+          display: window.getComputedStyle(el).display
+        });
+      });
     }
     
     // Override console.log para mostrar también en la página
