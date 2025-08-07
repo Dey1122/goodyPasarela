@@ -1,25 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!-- Definir la función de inicialización antes de cargar el script de Niubiz -->
   <script>
-    // Función que se ejecuta cuando el script de Niubiz se ha cargado correctamente
     function initializeCheckout() {
       console.log('Script de Niubiz cargado correctamente.');
-
-      // Leer parámetros de la URL
       const params = new URLSearchParams(window.location.search);
-
-      // Establecer los atributos del formulario con los parámetros de la URL
-      document.getElementById('checkoutForm').setAttribute('data-sessiontoken', params.get('sessionToken') || '');
-      document.getElementById('checkoutForm').setAttribute('data-purchasenumber', params.get('purchaseNumber') || '');
-      document.getElementById('checkoutForm').setAttribute('data-amount', params.get('amount') || '');
-
-      // Verificar si el objeto Checkout está disponible y luego abrir el formulario
-      if (typeof Checkout !== 'undefined') {
-        Checkout.open(); // Abre el formulario de pago
+      const checkoutForm = document.getElementById('checkoutForm');
+      
+      if (checkoutForm) {
+        checkoutForm.setAttribute('data-sessiontoken', params.get('sessionToken') || '');
+        checkoutForm.setAttribute('data-purchasenumber', params.get('purchaseNumber') || '');
+        checkoutForm.setAttribute('data-amount', params.get('amount') || '');
+        
+        if (typeof Checkout !== 'undefined') {
+          Checkout.open(); 
+        } else {
+          console.error('El objeto Checkout no está definido. Verifica si el script de Niubiz se cargó correctamente.');
+        }
       } else {
-        console.error('El objeto Checkout no está definido. Verifica si el script de Niubiz se cargó correctamente.');
+        console.error('El formulario con el ID checkoutForm no se encuentra en el DOM.');
       }
     }
 
@@ -27,10 +26,17 @@
     function handleScriptError() {
       console.error('Hubo un error al cargar el script de Niubiz.');
     }
-  </script>
 
-  <!-- Cargar el script de Niubiz después de definir la función -->
-  <script src="https://static-content-qas.vnforapps.com/env/sandbox/js/checkout.js" onload="initializeCheckout()" onerror="handleScriptError()"></script>
+    // Esperar a que el DOM esté completamente cargado
+    document.addEventListener('DOMContentLoaded', function () {
+      // Cargar el script de Niubiz después de que el DOM esté listo
+      const script = document.createElement('script');
+      script.src = "https://static-content-qas.vnforapps.com/env/sandbox/js/checkout.js";
+      script.onload = initializeCheckout;
+      script.onerror = handleScriptError;
+      document.head.appendChild(script);
+    });
+  </script>
 </head>
 <body>
   <!-- Formulario de pago -->
@@ -52,6 +58,5 @@
     data-showamount="TRUE"
   >
   </form>
-
 </body>
 </html>
