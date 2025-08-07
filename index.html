@@ -2,21 +2,30 @@
 <html>
 <head>
   <script>
+    // Función que se ejecuta cuando el script de Niubiz se ha cargado correctamente
     function initializeCheckout() {
       console.log('Script de Niubiz cargado correctamente.');
+
+      // Leer parámetros de la URL
       const params = new URLSearchParams(window.location.search);
+
+      // Establecer los atributos del formulario con los parámetros de la URL
       const checkoutForm = document.getElementById('checkoutForm');
       
+      // Asegurarse de que el formulario exista antes de modificarlo
       if (checkoutForm) {
         checkoutForm.setAttribute('data-sessiontoken', params.get('sessionToken') || '');
         checkoutForm.setAttribute('data-purchasenumber', params.get('purchaseNumber') || '');
         checkoutForm.setAttribute('data-amount', params.get('amount') || '');
         
-        if (typeof Checkout !== 'undefined') {
-          Checkout.open(); 
-        } else {
-          console.error('El objeto Checkout no está definido. Verifica si el script de Niubiz se cargó correctamente.');
-        }
+        // Verificar si el objeto Checkout está disponible después de un pequeño retraso
+        setTimeout(function() {
+          if (typeof Checkout !== 'undefined') {
+            Checkout.open(); // Abre el formulario de pago
+          } else {
+            console.error('El objeto Checkout no está definido. Verifica si el script de Niubiz se cargó correctamente.');
+          }
+        }, 1000); // Retraso de 1 segundo (1000 ms)
       } else {
         console.error('El formulario con el ID checkoutForm no se encuentra en el DOM.');
       }
