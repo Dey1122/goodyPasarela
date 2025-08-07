@@ -18,14 +18,28 @@
         checkoutForm.setAttribute('data-purchasenumber', params.get('purchaseNumber') || '');
         checkoutForm.setAttribute('data-amount', params.get('amount') || '');
         
-        // Verificar si el objeto Checkout está disponible después de un pequeño retraso
-        setTimeout(function() {
+        // Intentar abrir el pago después de algunos intentos
+        let retryCount = 0;
+        const maxRetries = 10; // Intentamos 10 veces
+        const retryInterval = 500; // Intervalo de 500ms
+
+        const checkAndOpenCheckout = function() {
           if (typeof Checkout !== 'undefined') {
             Checkout.open(); // Abre el formulario de pago
+            console.log('Formulario de pago abierto correctamente.');
           } else {
-            console.error('El objeto Checkout no está definido. Verifica si el script de Niubiz se cargó correctamente.');
+            retryCount++;
+            if (retryCount < maxRetries) {
+              console.log('Esperando a que el objeto Checkout esté disponible...');
+              setTimeout(checkAndOpenCheckout, retryInterval);
+            } else {
+              console.error('El objeto Checkout no está definido después de varios intentos.');
+            }
           }
-        }, 1000); // Retraso de 1 segundo (1000 ms)
+        };
+
+        // Comenzamos a verificar si el objeto Checkout está disponible
+        checkAndOpenCheckout();
       } else {
         console.error('El formulario con el ID checkoutForm no se encuentra en el DOM.');
       }
