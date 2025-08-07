@@ -20,7 +20,7 @@
         
         // Intentar abrir el pago después de algunos intentos
         let retryCount = 0;
-        const maxRetries = 10; // Intentamos 10 veces
+        const maxRetries = 50; // Intentamos 10 veces
         const retryInterval = 500; // Intervalo de 500ms
 
         const checkAndOpenCheckout = function() {
