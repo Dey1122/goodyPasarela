@@ -31,12 +31,15 @@
         console.log('- purchaseNumber:', params.get('purchaseNumber'));
         console.log('- amount:', params.get('amount'));
         
-        // Verificar si el objeto Checkout está disponible y luego abrir el formulario
-        if (typeof Checkout !== 'undefined') {
+        // Verificar si el objeto VisanetCheckout está disponible y luego abrir el formulario
+        if (typeof VisanetCheckout !== 'undefined') {
+          console.log('Objeto VisanetCheckout encontrado, abriendo formulario...');
+          VisanetCheckout.open();
+        } else if (typeof Checkout !== 'undefined') {
           console.log('Objeto Checkout encontrado, abriendo formulario...');
           Checkout.open();
         } else {
-          console.error('El objeto Checkout no está definido. Verifica si el script de Niubiz se cargó correctamente.');
+          console.error('Ningún objeto de checkout está definido.');
           // Debug: mostrar qué objetos están disponibles
           console.log('Objetos disponibles en window:', Object.keys(window).filter(key => key.toLowerCase().includes('checkout')));
         }
