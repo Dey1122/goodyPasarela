@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://static-content-qas.vnforapps.com/env/sandbox/js/checkout.js"></script>
+</head>
+<body>
+  <form id="checkoutForm"
+    action="https://www.tuweb.com/respuesta"
+    method="POST"
+    data-sessiontoken=""
+    data-channel="web"
+    data-merchantid="456879852"
+    data-purchasenumber=""
+    data-amount=""
+    data-expirationminutes="10"
+    data-timeouturl="https://www.tuweb.com/timeout"
+    data-merchantlogo="https://www.tuweb.com/logo.png"
+    data-merchantname="Tu Comercio"
+    data-buttonsize="MEDIUM"
+    data-buttoncolor="NAVY"
+    data-formbuttoncolor="#FF0000"
+    data-showamount="TRUE"
+  >
+  </form>
+  <script>
+    // Leer parámetros de la URL
+    const params = new URLSearchParams(window.location.search);
+    document.getElementById('checkoutForm').setAttribute('data-sessiontoken', params.get('sessionToken') || '');
+    document.getElementById('checkoutForm').setAttribute('data-purchasenumber', params.get('purchaseNumber') || '');
+    document.getElementById('checkoutForm').setAttribute('data-amount', params.get('amount') || '');
+    // Llama al formulario de Niubiz
+    Checkout.open();
+  </script>
+</body>
+</html>
