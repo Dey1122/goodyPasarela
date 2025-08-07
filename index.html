@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <script src="https://static-content-qas.vnforapps.com/env/sandbox/js/checkout.js"></script>
+  <!-- Cargar el script de Niubiz -->
+  <script src="https://static-content-qas.vnforapps.com/env/sandbox/js/checkout.js" onload="initializeCheckout()" onerror="handleScriptError()"></script>
 </head>
 <body>
+  <!-- Formulario de pago -->
   <form id="checkoutForm"
     action="https://www.tuweb.com/respuesta"
     method="POST"
@@ -24,8 +26,10 @@
   </form>
 
   <script>
-    // Función que se ejecuta cuando el script de Niubiz se ha cargado
-    window.onload = function() {
+    // Función que se ejecuta cuando el script de Niubiz se ha cargado correctamente
+    function initializeCheckout() {
+      console.log('Script de Niubiz cargado correctamente.');
+
       // Leer parámetros de la URL
       const params = new URLSearchParams(window.location.search);
 
@@ -34,13 +38,18 @@
       document.getElementById('checkoutForm').setAttribute('data-purchasenumber', params.get('purchaseNumber') || '');
       document.getElementById('checkoutForm').setAttribute('data-amount', params.get('amount') || '');
 
-      // Esperar a que el script de Checkout se haya cargado antes de llamarlo
+      // Verificar si el objeto Checkout está disponible y luego abrir el formulario
       if (typeof Checkout !== 'undefined') {
-        Checkout.open();
+        Checkout.open(); // Abre el formulario de pago
       } else {
         console.error('El objeto Checkout no está definido. Verifica si el script de Niubiz se cargó correctamente.');
       }
-    };
+    }
+
+    // Función para manejar errores en el script de Niubiz
+    function handleScriptError() {
+      console.error('Hubo un error al cargar el script de Niubiz.');
+    }
   </script>
 </body>
 </html>
