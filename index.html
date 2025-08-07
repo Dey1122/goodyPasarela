@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <!-- Definir la función de inicialización antes de cargar el script de Niubiz -->
   <script>
     // Función que se ejecuta cuando el script de Niubiz se ha cargado correctamente
     function initializeCheckout() {
@@ -10,38 +11,15 @@
       const params = new URLSearchParams(window.location.search);
 
       // Establecer los atributos del formulario con los parámetros de la URL
-      const checkoutForm = document.getElementById('checkoutForm');
-      
-      // Asegurarse de que el formulario exista antes de modificarlo
-      if (checkoutForm) {
-        checkoutForm.setAttribute('data-sessiontoken', params.get('sessionToken') || '');
-        checkoutForm.setAttribute('data-purchasenumber', params.get('purchaseNumber') || '');
-        checkoutForm.setAttribute('data-amount', params.get('amount') || '');
-        
-        // Intentar abrir el pago después de algunos intentos
-        let retryCount = 0;
-        const maxRetries = 50; // Intentamos 10 veces
-        const retryInterval = 500; // Intervalo de 500ms
+      document.getElementById('checkoutForm').setAttribute('data-sessiontoken', params.get('sessionToken') || '');
+      document.getElementById('checkoutForm').setAttribute('data-purchasenumber', params.get('purchaseNumber') || '');
+      document.getElementById('checkoutForm').setAttribute('data-amount', params.get('amount') || '');
 
-        const checkAndOpenCheckout = function() {
-          if (typeof Checkout !== 'undefined') {
-            Checkout.open(); // Abre el formulario de pago
-            console.log('Formulario de pago abierto correctamente.');
-          } else {
-            retryCount++;
-            if (retryCount < maxRetries) {
-              console.log('Esperando a que el objeto Checkout esté disponible...');
-              setTimeout(checkAndOpenCheckout, retryInterval);
-            } else {
-              console.error('El objeto Checkout no está definido después de varios intentos.');
-            }
-          }
-        };
-
-        // Comenzamos a verificar si el objeto Checkout está disponible
-        checkAndOpenCheckout();
+      // Verificar si el objeto Checkout está disponible y luego abrir el formulario
+      if (typeof Checkout !== 'undefined') {
+        Checkout.open(); // Abre el formulario de pago
       } else {
-        console.error('El formulario con el ID checkoutForm no se encuentra en el DOM.');
+        console.error('El objeto Checkout no está definido. Verifica si el script de Niubiz se cargó correctamente.');
       }
     }
 
@@ -49,17 +27,10 @@
     function handleScriptError() {
       console.error('Hubo un error al cargar el script de Niubiz.');
     }
-
-    // Esperar a que el DOM esté completamente cargado
-    document.addEventListener('DOMContentLoaded', function () {
-      // Cargar el script de Niubiz después de que el DOM esté listo
-      const script = document.createElement('script');
-      script.src = "https://static-content-qas.vnforapps.com/env/sandbox/js/checkout.js";
-      script.onload = initializeCheckout;
-      script.onerror = handleScriptError;
-      document.head.appendChild(script);
-    });
   </script>
+
+  <!-- Cargar el script de Niubiz después de definir la función -->
+  <script src="https://static-content-qas.vnforapps.com/env/sandbox/js/checkout.js" onload="initializeCheckout()" onerror="handleScriptError()"></script>
 </head>
 <body>
   <!-- Formulario de pago -->
@@ -81,5 +52,6 @@
     data-showamount="TRUE"
   >
   </form>
+
 </body>
 </html>
