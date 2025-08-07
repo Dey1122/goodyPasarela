@@ -185,8 +185,7 @@
           manualButtonContainer.style.display = 'block';
         }
       }
-      }
-      
+
       // Verificar si el DOM ya está listo
       if (document.readyState === 'loading') {
         // DOM aún se está cargando, esperar al evento DOMContentLoaded
@@ -195,11 +194,16 @@
         // DOM ya está listo, ejecutar inmediatamente
         setupCheckout();
       }
-    
+    }
     
     // Función para manejar errores en el script de Niubiz
     function handleScriptError() {
       console.error('Hubo un error al cargar el script de Niubiz.');
+    }
+    
+    // Función debugInfo
+    function debugInfo() {
+      console.log("Información de debug no definida en este contexto.");
     }
   </script>
   
@@ -266,154 +270,5 @@
     }
   </style>
   
-  <script>
-    // Script adicional para mostrar el estado en tiempo real
-    function updateStatus(message) {
-      const statusDiv = document.getElementById('status');
-      if (statusDiv) {
-        const timestamp = new Date().toLocaleTimeString();
-        statusDiv.innerHTML += '<br>' + timestamp + ': ' + message;
-      }
-    }
-    
-    // Función para abrir checkout manualmente
-    function openCheckoutManually() {
-      console.log('Intentando abrir checkout manualmente...');
-      try {
-        if (typeof VisanetCheckout !== 'undefined') {
-          VisanetCheckout.open();
-          setTimeout(checkModalVisibility, 500);
-        } else if (typeof Checkout !== 'undefined') {
-          Checkout.open();
-          setTimeout(checkModalVisibility, 500);
-        }
-      } catch (error) {
-        console.error('Error al abrir manualmente:', error);
-      }
-    }
-    
-    // Función para forzar la visibilidad del modal
-    function forceShowModal() {
-      console.log('Buscando y forzando visibilidad de modales...');
-      
-      // Seleccionar todos los elementos que podrían ser el modal
-      const allElements = document.querySelectorAll('*');
-      let modalCandidates = [];
-      
-      allElements.forEach(el => {
-        const style = window.getComputedStyle(el);
-        const rect = el.getBoundingClientRect();
-        
-        // Buscar elementos que podrían ser modales
-        if (
-          (style.position === 'fixed' || style.position === 'absolute') &&
-          (style.zIndex > 1000 || 
-           el.className.includes('modal') || 
-           el.className.includes('overlay') ||
-           el.className.includes('checkout') ||
-           el.id.includes('niubiz') ||
-           el.id.includes('visanet'))
-        ) {
-          modalCandidates.push({
-            element: el,
-            display: style.display,
-            visibility: style.visibility,
-            zIndex: style.zIndex,
-            className: el.className,
-            id: el.id
-          });
-        }
-      });
-      
-      console.log('Candidatos a modal encontrados:', modalCandidates);
-      
-      modalCandidates.forEach((candidate, index) => {
-        console.log(`Candidato ${index + 1}:`, candidate);
-        
-        // Forzar visibilidad
-        const el = candidate.element;
-        el.style.display = 'block !important';
-        el.style.visibility = 'visible !important';
-        el.style.opacity = '1 !important';
-        el.style.zIndex = '999999 !important';
-        el.style.position = 'fixed !important';
-        el.style.top = '50px !important';
-        el.style.left = '50px !important';
-        el.style.background = 'white !important';
-        el.style.border = '2px solid red !important';
-      });
-      
-      if (modalCandidates.length === 0) {
-        console.log('❌ No se encontraron candidatos a modal');
-        alert('No se encontró el modal de Niubiz. Verifica que el sessionToken sea válido.');
-      }
-    }
-    
-    // Función para debug detallado de elementos
-    function debugElements() {
-      console.log('=== DEBUG DETALLADO DE ELEMENTOS ===');
-      
-      // Información del documento
-      console.log('Document info:', {
-        title: document.title,
-        url: document.URL,
-        scripts: Array.from(document.scripts).map(s => s.src),
-        iframes: Array.from(document.iframes || []).map(i => i.src)
-      });
-      
-      // Buscar iframes
-      const iframes = document.querySelectorAll('iframe');
-      console.log(`Iframes encontrados: ${iframes.length}`);
-      iframes.forEach((iframe, index) => {
-        console.log(`Iframe ${index + 1}:`, {
-          src: iframe.src,
-          style: iframe.style.cssText,
-          display: window.getComputedStyle(iframe).display,
-          visibility: window.getComputedStyle(iframe).visibility
-        });
-        
-        // Hacer visible si está oculto
-        iframe.style.display = 'block !important';
-        iframe.style.visibility = 'visible !important';
-        iframe.style.position = 'fixed !important';
-        iframe.style.top = '100px !important';
-        iframe.style.left = '100px !important';
-        iframe.style.width = '800px !important';
-        iframe.style.height = '600px !important';
-        iframe.style.zIndex = '999999 !important';
-        iframe.style.border = '3px solid blue !important';
-      });
-      
-      // Buscar elementos con z-index alto
-      const highZElements = Array.from(document.querySelectorAll('*')).filter(el => {
-        const zIndex = parseInt(window.getComputedStyle(el).zIndex);
-        return zIndex > 1000;
-      });
-      
-      console.log(`Elementos con z-index > 1000: ${highZElements.length}`);
-      highZElements.forEach((el, index) => {
-        console.log(`Elemento z-index alto ${index + 1}:`, {
-          tagName: el.tagName,
-          id: el.id,
-          className: el.className,
-          zIndex: window.getComputedStyle(el).zIndex,
-          display: window.getComputedStyle(el).display
-        });
-      });
-    }
-    
-    // Override console.log para mostrar también en la página
-    const originalLog = console.log;
-    console.log = function(...args) {
-      originalLog.apply(console, args);
-      updateStatus(args.join(' '));
-    };
-    
-    const originalError = console.error;
-    console.error = function(...args) {
-      originalError.apply(console, args);
-      updateStatus('❌ ERROR: ' + args.join(' '));
-    };
-  </script>
 </body>
 </html>
