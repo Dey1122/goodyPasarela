@@ -15,25 +15,25 @@
           return;
         }
 
-        const sessionToken = params.get('sessionToken') || '';
-        const purchaseNumber = params.get('purchaseNumber') || '';
+        const sessiontoken = params.get('sessiontoken') || '';
+        const purchasenumber = params.get('purchasenumber') || '';
         const amount = params.get('amount') || '';
 
         // Verificar que los parámetros estén presentes
-        if (!sessionToken || !purchaseNumber || !amount) {
+        if (!sessiontoken || !purchasenumber || !amount) {
           console.error('ERROR: Faltan parámetros en la URL');
           return;
         }
 
         // Establecer los atributos del formulario con los parámetros de la URL
-        checkoutForm.setAttribute('data-sessiontoken', sessionToken);
-        checkoutForm.setAttribute('data-purchasenumber', purchaseNumber);
+        checkoutForm.setAttribute('data-sessiontoken', sessiontoken);
+        checkoutForm.setAttribute('data-purchasenumber', purchasenumber);
         checkoutForm.setAttribute('data-amount', amount);
 
         const merchantId = checkoutForm.getAttribute('data-merchantid');
         const action = checkoutForm.getAttribute('action');
 
-        if (!action || !merchantId || !sessionToken || !purchaseNumber || !amount) {
+        if (!action || !merchantId || !sessiontoken || !purchasenumber || !amount) {
           console.error('ERROR: Faltan parámetros importantes');
           return;
         }
