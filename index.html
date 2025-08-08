@@ -16,7 +16,7 @@
 
   <!-- Formulario según documentación de Niubiz -->
   <form id="checkoutForm" action="" method="POST">
-    <!-- El script DEBE estar dentro del form con todos los data-* configurados -->
+    <!-- El script se agregará dinámicamente -->
   </form>
 
   <style>
@@ -29,7 +29,6 @@
       display: none;
     }
     
-    /* Estilos para el botón de Niubiz */
     .start-js-btn {
       margin: 20px auto;
       display: block !important;
@@ -57,7 +56,7 @@
         return;
       }
 
-      console.log('Configuración aplicada:');
+      console.log('🚀 Configuración de Niubiz:');
       console.log('- Session Token:', params.get('sessiontoken'));
       console.log('- Purchase Number:', params.get('purchasenumber'));
       console.log('- Amount:', params.get('amount'));
@@ -89,18 +88,20 @@
 
       // Eventos del script
       script.onload = function() {
-        console.log('Script de Niubiz cargado correctamente');
+        console.log('✅ Script de Niubiz cargado correctamente');
+        
         // Ocultar spinner cuando el botón esté listo
         setTimeout(() => {
           const paymentButton = document.querySelector('button[class*="start-js-btn"], .start-js-btn');
           if (paymentButton) {
             document.body.classList.add('payment-ready');
-            console.log('Botón de pago encontrado y visible');
+            console.log('✅ Botón de pago encontrado y visible');
           } else {
-            console.log('Botón de pago no encontrado, intentando configuración manual...');
+            console.log('⚠️ Botón de pago no encontrado, intentando configuración manual...');
             
             // Si el botón automático no aparece, intentar configuración manual
             if (typeof VisanetCheckout !== 'undefined') {
+              // Configurar Niubiz
               VisanetCheckout.configure({
                 action: params.get('action'),
                 merchantid: params.get('merchantid'),
@@ -118,7 +119,7 @@
                 showamount: 'TRUE'
               });
               
-              // Crear botón manual si es necesario
+              // Crear botón manual
               const manualButton = document.createElement('button');
               manualButton.textContent = 'Pagar con Tarjeta';
               manualButton.className = 'start-js-btn';
@@ -136,19 +137,21 @@
               
               manualButton.onclick = function(e) {
                 e.preventDefault();
+                console.log('🔄 Abriendo VisanetCheckout...');
                 VisanetCheckout.open();
                 return false;
               };
               
               form.appendChild(manualButton);
               document.body.classList.add('payment-ready');
+              console.log('✅ Botón manual creado');
             }
           }
         }, 2000);
       };
       
       script.onerror = function() {
-        console.error('Error al cargar el script de Niubiz');
+        console.error('❌ Error al cargar el script de Niubiz');
         alert('Error al cargar la pasarela de pago. Por favor, inténtalo de nuevo.');
       };
 
@@ -156,12 +159,17 @@
       form.appendChild(script);
     }
 
-    // Ejecutar cuando el DOM esté listo
+    // NO redireccionar automáticamente - solo configurar Niubiz
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', setupNiubizCheckout);
     } else {
       setupNiubizCheckout();
     }
+
+    // Interceptar envíos del formulario para debug
+    window.addEventListener('beforeunload', function(e) {
+      console.log('🔄 Página se está descargando/redirigiendo');
+    });
   </script>
 </body>
 </html>
