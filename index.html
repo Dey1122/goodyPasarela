@@ -1,131 +1,118 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <script>
-    function initializeCheckout() {
-      console.log('Script de Niubiz cargado correctamente.');
-
-      function setupCheckout() {
-        // Leer parámetros de la URL
-        const params = new URLSearchParams(window.location.search);
-        const checkoutForm = document.getElementById('checkoutForm');
-
-        if (!checkoutForm) {
-          console.error('El formulario checkoutForm no se encontró en el DOM');
-          return;
-        }
-
-        // Establecer los atributos del formulario con los parámetros de la URL
-        checkoutForm.setAttribute('data-sessiontoken', params.get('sessiontoken') || '');
-        checkoutForm.setAttribute('data-purchasenumber', params.get('purchasenumber') || '');
-        checkoutForm.setAttribute('data-amount', params.get('amount') || '');
-        checkoutForm.setAttribute('data-channel', 'web'); // Valor fijo o desde URL
-        checkoutForm.setAttribute('data-currency', 'PEN'); // Valor fijo o desde URL
-        checkoutForm.setAttribute('data-merchantid', params.get('merchantid') || '');
-        checkoutForm.setAttribute('action', params.get('action') || checkoutForm.getAttribute('action'));
-
-        // Validar que los parámetros obligatorios estén presentes
-        const requiredParams = ['sessiontoken', 'purchasenumber', 'amount', 'action', 'merchantid'];
-        for (const param of requiredParams) {
-          if (!params.get(param)) {
-            console.error(`ERROR: Falta el parámetro ${param}`);
-            return;
-          }
-        }
-
-        console.log(params.get('sessiontoken'));  // Verifica el sessiontoken
-        console.log(params.get('purchasenumber'));  // Verifica el purchasenumber
-        console.log(params.get('amount'));  // Verifica el amount
-        console.log(params.get('action'));  // Verifica el amount
-        console.log(params.get('merchantid'));  // Verifica el amount
-        
-
-        // Intentar abrir el formulario
-        if (typeof VisanetCheckout !== 'undefined') {
-          console.log('Abriendo VisanetCheckout...');
-          VisanetCheckout.open({
-          action: checkoutForm.getAttribute('action'),
-          merchantid: checkoutForm.getAttribute('data-merchantid'),
-          sessiontoken: checkoutForm.getAttribute('data-sessiontoken'),
-          amount: checkoutForm.getAttribute('data-amount'),
-          purchasenumber: checkoutForm.getAttribute('data-purchasenumber'),
-          channel: 'web',
-          currency: 'PEN'
-        });
-          setTimeout(() => checkModalVisibility(), 1000);
-        } else {
-          console.error('VisanetCheckout no está definido');
-        }
-      }
-
-      function checkModalVisibility() {
-        console.log('Verificando visibilidad del modal...');
-        
-        const modal = document.querySelector('[id*="checkout"], [class*="checkout"]');
-        
-        if (modal) {
-          console.log('Modal encontrado, forzando visibilidad...');
-          modal.style.display = 'block';
-          modal.style.visibility = 'visible';
-          modal.style.zIndex = '9999'; 
-          modal.style.position = 'fixed'; 
-          modal.style.top = '50px'; 
-          modal.style.left = '50px'; 
-        } else {
-          console.log('Modal no encontrado');
-        }
-      }
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', setupCheckout);
-      } else {
-        setupCheckout();
-      }
-    }
-
-    function handleScriptError() {
-      console.error('Error al cargar el script de Niubiz.');
-    }
-  </script>
-  
-  <script src="https://static-content-qas.vnforapps.com/env/sandbox/js/checkout.js" onload="initializeCheckout()" onerror="handleScriptError()"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pago Niubiz</title>
 </head>
 <body>
   <h1>Procesando Pago con Niubiz</h1>
   <p>Configurando formulario de pago...</p>
+  
   <div id="loading-spinner" style="text-align: center; margin: 20px;">
     <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 0 auto;"></div>
     <p>Cargando pasarela de pago...</p>
   </div>
 
-  <form id="checkoutForm"
-    action=""
-    method="POST"
-    data-sessiontoken=""
-    data-channel="web"
-    data-merchantid=""
-    data-purchasenumber=""
-    data-amount=""
-    data-currency="PEN"
-    data-expirationminutes="10"
-    data-timeouturl="https://www.tuweb.com/timeout"
-    data-merchantlogo="https://www.tuweb.com/logo.png"
-    data-merchantname="Tu Comercio"
-    data-buttonsize="MEDIUM"
-    data-buttoncolor="NAVY"
-    data-formbuttoncolor="#FF0000"
-    data-showamount="TRUE">
+  <!-- Formulario con script de Niubiz embebido -->
+  <form id="checkoutForm" action="" method="POST">
+    <script 
+      src="https://static-content-qas.vnforapps.com/env/sandbox/js/checkout.js"
+      data-sessiontoken=""
+      data-channel="web"
+      data-merchantid=""
+      data-purchasenumber=""
+      data-amount=""
+      data-currency="PEN"
+      data-expirationminutes="10"
+      data-timeouturl="https://dey1122.github.io/responseGoody/"
+      data-merchantlogo=""
+      data-merchantname="Tu Comercio"
+      data-buttonsize="MEDIUM"
+      data-buttoncolor="NAVY"
+      data-formbuttoncolor="#FF0000"
+      data-showamount="TRUE">
+    </script>
   </form>
-  
-  <div id="manual-button-container" style="display: none; text-align: center; margin-top: 20px;">
-    <button onclick="forceShowModal()" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px;">Forzar Modal Visible</button>
-  </div>
 
   <style>
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+    
+    /* Ocultar el spinner cuando el botón esté listo */
+    .payment-ready #loading-spinner {
+      display: none;
+    }
   </style>
+
+  <script>
+    function setupNiubizCheckout() {
+      // Leer parámetros de la URL
+      const params = new URLSearchParams(window.location.search);
+      
+      // Validar parámetros obligatorios
+      const requiredParams = ['sessiontoken', 'purchasenumber', 'amount', 'action', 'merchantid'];
+      const missingParams = [];
+      
+      for (const param of requiredParams) {
+        if (!params.get(param)) {
+          missingParams.push(param);
+        }
+      }
+      
+      if (missingParams.length > 0) {
+        console.error('Faltan parámetros obligatorios:', missingParams);
+        document.body.innerHTML = `
+          <div style="text-align: center; margin: 50px; color: red;">
+            <h2>Error en la configuración</h2>
+            <p>Faltan los siguientes parámetros: ${missingParams.join(', ')}</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Buscar el script de Niubiz
+      const niubizScript = document.querySelector('script[src*="checkout.js"]');
+      if (!niubizScript) {
+        console.error('Script de Niubiz no encontrado');
+        return;
+      }
+
+      // Configurar el formulario
+      const form = document.getElementById('checkoutForm');
+      form.setAttribute('action', params.get('action'));
+
+      // Configurar los atributos del script
+      niubizScript.setAttribute('data-sessiontoken', params.get('sessiontoken'));
+      niubizScript.setAttribute('data-purchasenumber', params.get('purchasenumber'));
+      niubizScript.setAttribute('data-amount', params.get('amount'));
+      niubizScript.setAttribute('data-merchantid', params.get('merchantid'));
+      niubizScript.setAttribute('data-timeouturl', params.get('action')); // Usar la misma URL de acción como timeout
+
+      console.log('Configuración aplicada:');
+      console.log('- Session Token:', params.get('sessiontoken'));
+      console.log('- Purchase Number:', params.get('purchasenumber'));
+      console.log('- Amount:', params.get('amount'));
+      console.log('- Merchant ID:', params.get('merchantid'));
+      console.log('- Action URL:', params.get('action'));
+
+      // Ocultar el spinner cuando el botón esté listo
+      setTimeout(() => {
+        const paymentButton = document.querySelector('button[class*="start-js-btn"]');
+        if (paymentButton) {
+          document.body.classList.add('payment-ready');
+        }
+      }, 2000);
+    }
+
+    // Ejecutar cuando el DOM esté listo
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setupNiubizCheckout);
+    } else {
+      setupNiubizCheckout();
+    }
+  </script>
 </body>
 </html>
