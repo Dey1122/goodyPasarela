@@ -7,16 +7,16 @@
   status = 200
   force = false
 
-[headers]
+[[headers]]
   # Permitir peticiones POST desde Niubiz
   for = "/success.html"
-    [headers.values]
+  [headers.values]
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type, Authorization"
 
 [[headers]]
   for = "/*"
-    [headers.values]
+  [headers.values]
     X-Frame-Options = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
