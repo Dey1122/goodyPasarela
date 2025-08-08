@@ -17,55 +17,203 @@
             max-width: 500px;
             margin: 0 auto;
         }
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>✅ Pago Procesado</h1>
         <p>Tu pago está siendo verificado...</p>
-        <div id="info"></div>
+        <div id="info">Buscando datos de transacción...</div>
+        
+        <div id="debugInfo" class="debug-info">
+            <h3>Debug Info:</h3>
+            <div id="debugContent"></div>
+        </div>
     </div>
     
     <script>
         console.log('🎯 Página de éxito cargada');
         console.log('📍 URL completa:', window.location.href);
+        console.log('📋 Método HTTP:', window.location.protocol);
         
-        // Capturar todos los parámetros
-        const urlParams = new URLSearchParams(window.location.search);
-        const transactionToken = urlParams.get('transactionToken');
-        const customerEmail = urlParams.get('customerEmail');
-        const channel = urlParams.get('channel');
+        let transactionToken = null;
+        let customerEmail = null;
+        let channel = null;
         
-        // Mostrar info en la página
-        const infoDiv = document.getElementById('info');
-        if (transactionToken) {
-            infoDiv.innerHTML = `
-                <p><strong>Token:</strong> ${transactionToken.substring(0, 8)}...</p>
-                <p><strong>Email:</strong> ${customerEmail || 'No especificado'}</p>
-                <p>Procesando autorización automáticamente...</p>
+        // Función para mostrar debug info
+        function updateDebugInfo(source, data) {
+            const debugContent = document.getElementById('debugContent');
+            debugContent.innerHTML += `
+                <p><strong>${source}:</strong></p>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+                <hr>
             `;
-        } else {
-            infoDiv.innerHTML = '<p>Esperando datos de transacción...</p>';
         }
         
-        // Enviar a Flutter si está disponible
-        if (transactionToken && window.FlutterNiubiz) {
-            console.log('📱 Enviando token a Flutter:', transactionToken);
-            FlutterNiubiz.postMessage(JSON.stringify({
-                type: 'success',
-                transactionToken: transactionToken,
-                customerEmail: customerEmail,
-                channel: channel || 'web'
-            }));
-        } else if (!window.FlutterNiubiz) {
-            console.log('⚠️ FlutterNiubiz no disponible');
+        // Método 1: Capturar parámetros de URL (GET)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('transactionToken')) {
+            transactionToken = urlParams.get('transactionToken');
+            customerEmail = urlParams.get('customerEmail');
+            channel = urlParams.get('channel');
+            console.log('✅ Datos encontrados en URL');
+            updateDebugInfo('URL Parameters', {
+                transactionToken, customerEmail, channel
+            });
         }
         
-        // Debug: mostrar todos los parámetros
-        console.log('📋 Parámetros recibidos:');
-        for (const [key, value] of urlParams.entries()) {
-            console.log(`  ${key}: ${value}`);
+        // Método 2: Capturar datos de formularios POST
+        function checkForPostData() {
+            const forms = document.querySelectorAll('form');
+            const inputs = document.querySelectorAll('input[type="hidden"]');
+            
+            console.log('🔍 Formularios encontrados:', forms.length);
+            console.log('🔍 Inputs ocultos encontrados:', inputs.length);
+            
+            inputs.forEach(input => {
+                console.log(`📝 Input: ${input.name} = ${input.value}`);
+                if (input.name === 'transactionToken') {
+                    transactionToken = input.value;
+                }
+                if (input.name === 'customerEmail') {
+                    customerEmail = input.value;
+                }
+                if (input.name === 'channel') {
+                    channel = input.value;
+                }
+            });
+            
+            if (inputs.length > 0) {
+                const formData = {};
+                inputs.forEach(input => {
+                    formData[input.name] = input.value;
+                });
+                updateDebugInfo('Form Data', formData);
+            }
         }
+        
+        // Método 3: Interceptar cuando se agregan nuevos elementos al DOM
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList') {
+                    console.log('🔄 DOM cambió, re-buscando datos...');
+                    checkForPostData();
+                    checkForTokenData();
+                }
+            });
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+        
+        // Método 4: Buscar datos en variables globales o elementos específicos
+        function checkForTokenData() {
+            // Buscar en variables globales
+            if (typeof window.transactionToken !== 'undefined') {
+                transactionToken = window.transactionToken;
+                console.log('✅ Token encontrado en variable global');
+            }
+            
+            // Buscar en elementos con IDs específicos
+            const tokenElement = document.getElementById('transactionToken');
+            if (tokenElement) {
+                transactionToken = tokenElement.value || tokenElement.textContent;
+                console.log('✅ Token encontrado en elemento');
+            }
+            
+            // Buscar en localStorage (por si Niubiz lo guarda allí)
+            if (localStorage.getItem('transactionToken')) {
+                transactionToken = localStorage.getItem('transactionToken');
+                console.log('✅ Token encontrado en localStorage');
+            }
+        }
+        
+        // Función para procesar los datos y enviar a Flutter
+        function processTransactionData() {
+            const infoDiv = document.getElementById('info');
+            
+            if (transactionToken && transactionToken.trim() !== '' && transactionToken !== 'null') {
+                console.log('🎯 Token válido encontrado:', transactionToken);
+                
+                infoDiv.innerHTML = `
+                    <p><strong>✅ Transacción Exitosa</strong></p>
+                    <p><strong>Token:</strong> ${transactionToken.substring(0, 8)}...</p>
+                    <p><strong>Email:</strong> ${customerEmail || 'No especificado'}</p>
+                    <p><strong>Canal:</strong> ${channel || 'web'}</p>
+                    <p>🔄 Procesando autorización automáticamente...</p>
+                `;
+                
+                // Enviar a Flutter
+                if (window.FlutterNiubiz) {
+                    const data = {
+                        type: 'success',
+                        transactionToken: transactionToken,
+                        customerEmail: customerEmail,
+                        channel: channel || 'web'
+                    };
+                    console.log('📱 Enviando datos a Flutter:', data);
+                    window.FlutterNiubiz.postMessage(JSON.stringify(data));
+                } else {
+                    console.log('⚠️ FlutterNiubiz no disponible, agregando al DOM...');
+                    
+                    // Crear formulario visible para Flutter
+                    const form = document.createElement('form');
+                    form.style.display = 'none';
+                    form.innerHTML = `
+                        <input type="hidden" name="transactionToken" value="${transactionToken}">
+                        <input type="hidden" name="customerEmail" value="${customerEmail || ''}">
+                        <input type="hidden" name="channel" value="${channel || 'web'}">
+                    `;
+                    document.body.appendChild(form);
+                }
+            } else {
+                console.log('❌ No se encontró token válido');
+                infoDiv.innerHTML = '<p>⏳ Esperando datos de transacción...</p>';
+            }
+        }
+        
+        // Ejecutar búsquedas iniciales
+        checkForPostData();
+        checkForTokenData();
+        processTransactionData();
+        
+        // Re-verificar cada 2 segundos por 30 segundos
+        let checkCount = 0;
+        const maxChecks = 15;
+        const checkInterval = setInterval(() => {
+            checkCount++;
+            console.log(`🔄 Verificación #${checkCount}`);
+            
+            checkForPostData();
+            checkForTokenData();
+            
+            if (transactionToken || checkCount >= maxChecks) {
+                clearInterval(checkInterval);
+                processTransactionData();
+            }
+        }, 2000);
+        
+        // Debug: Listar todos los elementos del DOM
+        setTimeout(() => {
+            console.log('📋 Elementos en el DOM:');
+            const allElements = document.querySelectorAll('*');
+            allElements.forEach(el => {
+                if (el.name || el.id || el.value) {
+                    console.log(`  ${el.tagName}: name="${el.name}" id="${el.id}" value="${el.value}"`);
+                }
+            });
+        }, 5000);
     </script>
 </body>
 </html>
