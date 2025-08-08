@@ -31,6 +31,11 @@
           }
         }
 
+        console.log(params.get('sessiontoken'));  // Verifica el sessiontoken
+        console.log(params.get('purchasenumber'));  // Verifica el purchasenumber
+        console.log(params.get('amount'));  // Verifica el amount
+
+
         // Intentar abrir el formulario
         if (typeof VisanetCheckout !== 'undefined') {
           console.log('Abriendo VisanetCheckout...');
