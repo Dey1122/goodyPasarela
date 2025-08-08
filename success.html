@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pago Procesado</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 50px; 
+            background: #f5f5f5;
+        }
+        .container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Pago Procesado</h1>
+        <p>Tu pago está siendo verificado...</p>
+        <div id="info"></div>
+    </div>
+    
+    <script>
+        console.log('🎯 Página de éxito cargada');
+        console.log('📍 URL completa:', window.location.href);
+        
+        // Capturar todos los parámetros
+        const urlParams = new URLSearchParams(window.location.search);
+        const transactionToken = urlParams.get('transactionToken');
+        const customerEmail = urlParams.get('customerEmail');
+        const channel = urlParams.get('channel');
+        
+        // Mostrar info en la página
+        const infoDiv = document.getElementById('info');
+        if (transactionToken) {
+            infoDiv.innerHTML = `
+                <p><strong>Token:</strong> ${transactionToken.substring(0, 8)}...</p>
+                <p><strong>Email:</strong> ${customerEmail || 'No especificado'}</p>
+                <p>Procesando autorización automáticamente...</p>
+            `;
+        } else {
+            infoDiv.innerHTML = '<p>Esperando datos de transacción...</p>';
+        }
+        
+        // Enviar a Flutter si está disponible
+        if (transactionToken && window.FlutterNiubiz) {
+            console.log('📱 Enviando token a Flutter:', transactionToken);
+            FlutterNiubiz.postMessage(JSON.stringify({
+                type: 'success',
+                transactionToken: transactionToken,
+                customerEmail: customerEmail,
+                channel: channel || 'web'
+            }));
+        } else if (!window.FlutterNiubiz) {
+            console.log('⚠️ FlutterNiubiz no disponible');
+        }
+        
+        // Debug: mostrar todos los parámetros
+        console.log('📋 Parámetros recibidos:');
+        for (const [key, value] of urlParams.entries()) {
+            console.log(`  ${key}: ${value}`);
+        }
+    </script>
+</body>
+</html>
