@@ -16,7 +16,7 @@
 
   <!-- Formulario según documentación de Niubiz -->
   <form id="checkoutForm" action="" method="POST">
-    <!-- El script se agregará dinámicamente aquí -->
+    <!-- El script se agregará dinámicamente -->
   </form>
 
   <style>
@@ -32,27 +32,11 @@
     .start-js-btn {
       margin: 20px auto;
       display: block !important;
-      padding: 12px 24px;
-      font-size: 16px;
-      border: 3px solid red; /* Para que sea visible */
-    }
-
-    /* Asegurar que el modal de Niubiz sea visible */
-    #visaNetWrapper {
-      z-index: 999999 !important;
-    }
-    
-    #visaNetJS {
-      z-index: 999999 !important;
-      display: block !important;
-      visibility: visible !important;
     }
   </style>
 
   <script>
     function setupNiubizCheckout() {
-      console.log('🚀 Iniciando configuración de Niubiz...');
-      
       // Leer parámetros de la URL
       const params = new URLSearchParams(window.location.search);
       
@@ -67,12 +51,12 @@
       }
       
       if (missingParams.length > 0) {
-        console.error('❌ Faltan parámetros obligatorios:', missingParams);
+        console.error('Faltan parámetros obligatorios:', missingParams);
         alert('Error: Faltan parámetros obligatorios: ' + missingParams.join(', '));
         return;
       }
 
-      console.log('📋 Configuración de Niubiz:');
+      console.log('🚀 Configuración de Niubiz:');
       console.log('- Session Token:', params.get('sessiontoken'));
       console.log('- Purchase Number:', params.get('purchasenumber'));
       console.log('- Amount:', params.get('amount'));
@@ -83,14 +67,7 @@
       const form = document.getElementById('checkoutForm');
       form.setAttribute('action', params.get('action'));
 
-      // IMPORTANTE: Prevenir envío automático del formulario
-      form.addEventListener('submit', function(e) {
-        console.log('⚠️ Formulario intentando enviarse - PREVENIDO');
-        e.preventDefault();
-        return false;
-      });
-
-      // Crear el script de Niubiz
+      // Crear el script de Niubiz con todos los atributos requeridos
       const script = document.createElement('script');
       script.src = 'https://static-content-qas.vnforapps.com/env/sandbox/js/checkout.js';
       
@@ -113,15 +90,18 @@
       script.onload = function() {
         console.log('✅ Script de Niubiz cargado correctamente');
         
-        // Verificar que VisanetCheckout esté disponible
-        if (typeof VisanetCheckout !== 'undefined') {
-          console.log('✅ VisanetCheckout disponible');
-          
-          // Configurar VisanetCheckout manualmente
-          setTimeout(() => {
-            try {
-              console.log('🔧 Configurando VisanetCheckout...');
-              
+        // Ocultar spinner cuando el botón esté listo
+        setTimeout(() => {
+          const paymentButton = document.querySelector('button[class*="start-js-btn"], .start-js-btn');
+          if (paymentButton) {
+            document.body.classList.add('payment-ready');
+            console.log('✅ Botón de pago encontrado y visible');
+          } else {
+            console.log('⚠ Botón de pago no encontrado, intentando configuración manual...');
+            
+            // Si el botón automático no aparece, intentar configuración manual
+            if (typeof VisanetCheckout !== 'undefined') {
+              // Configurar Niubiz
               VisanetCheckout.configure({
                 action: params.get('action'),
                 merchantid: params.get('merchantid'),
@@ -139,79 +119,35 @@
                 showamount: 'TRUE'
               });
               
-              console.log('✅ VisanetCheckout configurado');
+              // Crear botón manual
+              const manualButton = document.createElement('button');
+              manualButton.textContent = 'Pagar con Tarjeta';
+              manualButton.className = 'start-js-btn';
+              manualButton.style.cssText = `
+                background: #1e3a8a;
+                color: white;
+                padding: 12px 24px;
+                border: none;
+                border-radius: 4px;
+                font-size: 16px;
+                cursor: pointer;
+                margin: 20px auto;
+                display: block;
+              `;
               
-            } catch (error) {
-              console.error('❌ Error configurando VisanetCheckout:', error);
-            }
-          }, 1000);
-        }
-        
-        // Buscar botón automático o crear uno manual
-        setTimeout(() => {
-          let paymentButton = document.querySelector('button[class*="start-js-btn"], .start-js-btn');
-          
-          if (paymentButton) {
-            console.log('✅ Botón automático encontrado');
-            document.body.classList.add('payment-ready');
-            
-            // Asegurar que el click abra el modal
-            paymentButton.addEventListener('click', function(e) {
-              e.preventDefault();
-              console.log('🔄 Click en botón - Abriendo VisanetCheckout...');
-              
-              if (typeof VisanetCheckout !== 'undefined') {
+              manualButton.onclick = function(e) {
+                e.preventDefault();
+                console.log('🔄 Abriendo VisanetCheckout...');
                 VisanetCheckout.open();
-              } else {
-                console.error('❌ VisanetCheckout no disponible');
-              }
-              return false;
-            });
-            
-          } else {
-            console.log('⚠️ Botón automático no encontrado, creando manual...');
-            
-            // Crear botón manual
-            const manualButton = document.createElement('button');
-            manualButton.textContent = 'Pagar con Tarjeta - CLICK AQUÍ';
-            manualButton.className = 'start-js-btn';
-            manualButton.type = 'button'; // IMPORTANTE: No submit
-            manualButton.style.cssText = `
-              background: #1e3a8a;
-              color: white;
-              padding: 15px 30px;
-              border: 3px solid red;
-              border-radius: 8px;
-              font-size: 18px;
-              font-weight: bold;
-              cursor: pointer;
-              margin: 20px auto;
-              display: block;
-            `;
-            
-            manualButton.onclick = function(e) {
-              e.preventDefault();
-              console.log('🔄 Click en botón manual - Abriendo VisanetCheckout...');
+                return false;
+              };
               
-              if (typeof VisanetCheckout !== 'undefined') {
-                try {
-                  VisanetCheckout.open();
-                  console.log('✅ VisanetCheckout.open() ejecutado');
-                } catch (error) {
-                  console.error('❌ Error al abrir VisanetCheckout:', error);
-                }
-              } else {
-                console.error('❌ VisanetCheckout no disponible');
-                alert('Error: VisanetCheckout no está cargado');
-              }
-              return false;
-            };
-            
-            form.appendChild(manualButton);
-            document.body.classList.add('payment-ready');
-            console.log('✅ Botón manual creado');
+              form.appendChild(manualButton);
+              document.body.classList.add('payment-ready');
+              console.log('✅ Botón manual creado');
+            }
           }
-        }, 3000);
+        }, 2000);
       };
       
       script.onerror = function() {
@@ -223,21 +159,16 @@
       form.appendChild(script);
     }
 
-    // Inicializar cuando el DOM esté listo
+    // NO redireccionar automáticamente - solo configurar Niubiz
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', setupNiubizCheckout);
     } else {
       setupNiubizCheckout();
     }
 
-    // Debug adicional
+    // Interceptar envíos del formulario para debug
     window.addEventListener('beforeunload', function(e) {
       console.log('🔄 Página se está descargando/redirigiendo');
-    });
-
-    // Interceptar clicks en toda la página para debug
-    document.addEventListener('click', function(e) {
-      console.log('👆 Click detectado en:', e.target.tagName, e.target.className);
     });
   </script>
 </body>
