@@ -21,9 +21,11 @@
         checkoutForm.setAttribute('data-amount', params.get('amount') || '');
         checkoutForm.setAttribute('data-channel', 'web'); // Valor fijo o desde URL
         checkoutForm.setAttribute('data-currency', 'PEN'); // Valor fijo o desde URL
+        checkoutForm.setAttribute('data-merchantid', params.get('merchantid') || '');
+        checkoutForm.setAttribute('action', params.get('action') || checkoutForm.getAttribute('action'));
 
         // Validar que los parámetros obligatorios estén presentes
-        const requiredParams = ['sessiontoken', 'purchasenumber', 'amount'];
+        const requiredParams = ['sessiontoken', 'purchasenumber', 'amount', 'action', 'merchantid'];
         for (const param of requiredParams) {
           if (!params.get(param)) {
             console.error(`ERROR: Falta el parámetro ${param}`);
