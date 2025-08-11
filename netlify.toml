@@ -1,5 +1,12 @@
 [build]
   publish = "."
+  functions = "netlify/functions"   # <— IMPORTANTE
+
+# (opcional) si quieres poder abrir /return en el navegador para test
+[[redirects]]
+  from = "/return"
+  to = "/.netlify/functions/niubiz-return"
+  status = 200
 
 [[redirects]]
   from = "/success.html"
@@ -8,7 +15,6 @@
   force = false
 
 [[headers]]
-  # Permitir peticiones POST desde Niubiz
   for = "/success.html"
   [headers.values]
     Access-Control-Allow-Origin = "*"
