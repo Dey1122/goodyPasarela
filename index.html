@@ -1,175 +1,115 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pago Niubiz</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; padding: 16px }
+    .wrap { max-width: 480px; margin: 0 auto; text-align: center }
+    .spinner { border:4px solid #eee; border-top:4px solid #3498db; border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; margin:16px auto }
+    @keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
+    .payment-ready #loading { display:none }
+    .start-js-btn { margin: 20px auto; display: block !important; }
+  </style>
 </head>
 <body>
-  <h1>Procesando Pago con Niubiz</h1>
-  <p>Configurando formulario de pago...</p>
-  
-  <div id="loading-spinner" style="text-align: center; margin: 20px;">
-    <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 0 auto;"></div>
-    <p>Cargando pasarela de pago...</p>
+  <div class="wrap">
+    <h2>Procesando pago</h2>
+    <p id="hint">Cargando pasarela de Niubiz…</p>
+    <div id="loading"><div class="spinner"></div></div>
+
+    <!-- El SDK buscará este <form> y generará su botón automáticamente -->
+    <form id="checkoutForm" action="" method="POST"></form>
   </div>
 
-  <!-- Formulario según documentación de Niubiz -->
-  <form id="checkoutForm" action="" method="POST">
-    <!-- El script se agregará dinámicamente -->
-  </form>
-
-  <style>
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    .payment-ready #loading-spinner {
-      display: none;
-    }
-    
-    .start-js-btn {
-      margin: 20px auto;
-      display: block !important;
-    }
-  </style>
-
   <script>
-    function setupNiubizCheckout() {
-      // Leer parámetros de la URL
-      const params = new URLSearchParams(window.location.search);
-      
-      // Validar parámetros obligatorios
-      const requiredParams = ['sessiontoken', 'purchasenumber', 'amount', 'action', 'merchantid'];
-      const missingParams = [];
-      
-      for (const param of requiredParams) {
-        if (!params.get(param)) {
-          missingParams.push(param);
-        }
-      }
-      
-      if (missingParams.length > 0) {
-        console.error('Faltan parámetros obligatorios:', missingParams);
-        alert('Error: Faltan parámetros obligatorios: ' + missingParams.join(', '));
-        return;
+    (function () {
+      // URL FIJA de la función Netlify que recibe el POST de Niubiz
+      const RETURN_URL = 'https://goodypasarela.netlify.app/.netlify/functions/niubiz-return';
+
+      // 1) Lee parámetros requeridos desde la URL
+      const qs = new URLSearchParams(location.search);
+      const required = ['sessiontoken','purchasenumber','amount','merchantid'];
+      const missing = required.filter(k => !qs.get(k));
+
+      if (missing.length) {
+        alert('Faltan parámetros: ' + missing.join(', '));
+        throw new Error('Missing params: ' + missing.join(', '));
       }
 
-      console.log('🚀 Configuración de Niubiz:');
-      console.log('- Session Token:', params.get('sessiontoken'));
-      console.log('- Purchase Number:', params.get('purchasenumber'));
-      console.log('- Amount:', params.get('amount'));
-      console.log('- Merchant ID:', params.get('merchantid'));
-      console.log('- Action URL:', params.get('action'));
+      const sessiontoken   = qs.get('sessiontoken');
+      const purchasenumber = qs.get('purchasenumber');
+      const amount         = qs.get('amount');
+      const merchantid     = qs.get('merchantid');
+      const currency       = (qs.get('currency') || 'PEN').toUpperCase();
 
-      // Configurar el formulario
+      console.log('Niubiz config:', { sessiontoken, purchasenumber, amount, merchantid, currency, RETURN_URL });
+
+      // 2) Define el action y timeout del formulario SIEMPRE hacia la función Netlify
       const form = document.getElementById('checkoutForm');
-      form.setAttribute('action', params.get('action'));
+      form.setAttribute('action', RETURN_URL);
 
-      // Crear el script de Niubiz con todos los atributos requeridos
-      const script = document.createElement('script');
-      script.src = 'https://static-content-qas.vnforapps.com/env/sandbox/js/checkout.js';
-      
-      // Configurar todos los atributos data-* requeridos
-      script.setAttribute('data-sessiontoken', params.get('sessiontoken'));
-      script.setAttribute('data-channel', 'web');
-      script.setAttribute('data-merchantid', params.get('merchantid'));
-      script.setAttribute('data-purchasenumber', params.get('purchasenumber'));
-      script.setAttribute('data-amount', params.get('amount'));
-      script.setAttribute('data-currency', 'PEN');
-      script.setAttribute('data-expirationminutes', '10');
-      script.setAttribute('data-timeouturl', params.get('action'));
-      script.setAttribute('data-merchantname', 'Tu Comercio');
-      script.setAttribute('data-buttonsize', 'MEDIUM');
-      script.setAttribute('data-buttoncolor', 'NAVY');
-      script.setAttribute('data-formbuttoncolor', '#FF0000');
-      script.setAttribute('data-showamount', 'TRUE');
+      // 3) Inserta el SDK de checkout con los atributos requeridos
+      const s = document.createElement('script');
+      s.src = 'https://static-content-qas.vnforapps.com/env/sandbox/js/checkout.js'; // prod: https://static-content.vnforapps.com/v2/js/checkout.js
 
-      // Eventos del script
-      script.onload = function() {
-        console.log('✅ Script de Niubiz cargado correctamente');
-        
-        // Ocultar spinner cuando el botón esté listo
+      s.setAttribute('data-sessiontoken',   sessiontoken);
+      s.setAttribute('data-merchantid',     merchantid);
+      s.setAttribute('data-purchasenumber', purchasenumber);
+      s.setAttribute('data-amount',         amount);
+      s.setAttribute('data-currency',       currency);
+      s.setAttribute('data-channel',        'web');
+      s.setAttribute('data-expirationminutes', '10');
+      s.setAttribute('data-timeouturl',     RETURN_URL);
+      s.setAttribute('data-merchantname',   'Tu Comercio');
+      s.setAttribute('data-buttonsize',     'MEDIUM');
+      s.setAttribute('data-buttoncolor',    'NAVY');
+      s.setAttribute('data-showamount',     'TRUE');
+
+      s.onload = function () {
+        console.log('✅ checkout.js cargado');
+
+        // Cuando el SDK insertó su botón, ocultamos el loader
         setTimeout(() => {
-          const paymentButton = document.querySelector('button[class*="start-js-btn"], .start-js-btn');
-          if (paymentButton) {
+          const btn = document.querySelector('button.start-js-btn, .start-js-btn');
+          if (btn) {
             document.body.classList.add('payment-ready');
-            console.log('✅ Botón de pago encontrado y visible');
+            console.log('✅ Botón de pago visible');
           } else {
-            console.log('⚠ Botón de pago no encontrado, intentando configuración manual...');
-            
-            // Si el botón automático no aparece, intentar configuración manual
+            console.warn('⚠ No apareció el botón automático; creando botón manual');
             if (typeof VisanetCheckout !== 'undefined') {
-              // Configurar Niubiz
+              // configurar programáticamente
               VisanetCheckout.configure({
-                action: params.get('action'),
-                merchantid: params.get('merchantid'),
-                sessiontoken: params.get('sessiontoken'),
-                amount: params.get('amount'),
-                purchasenumber: params.get('purchasenumber'),
+                action: RETURN_URL,
+                merchantid, sessiontoken, purchasenumber, amount, currency,
                 channel: 'web',
-                currency: 'PEN',
                 expirationminutes: 10,
-                timeouturl: params.get('action'),
+                timeouturl: RETURN_URL,
                 merchantname: 'Tu Comercio',
                 buttonsize: 'MEDIUM',
                 buttoncolor: 'NAVY',
-                formbuttoncolor: '#FF0000',
                 showamount: 'TRUE'
               });
-              
-              // Crear botón manual
-              const manualButton = document.createElement('button');
-              manualButton.textContent = 'Pagar con Tarjeta';
-              manualButton.className = 'start-js-btn';
-              manualButton.style.cssText = `
-                background: #1e3a8a;
-                color: white;
-                padding: 12px 24px;
-                border: none;
-                border-radius: 4px;
-                font-size: 16px;
-                cursor: pointer;
-                margin: 20px auto;
-                display: block;
-              `;
-              
-              manualButton.onclick = function(e) {
-                e.preventDefault();
-                console.log('🔄 Abriendo VisanetCheckout...');
-                VisanetCheckout.open();
-                return false;
-              };
-              
-              form.appendChild(manualButton);
+
+              const manual = document.createElement('button');
+              manual.className = 'start-js-btn';
+              manual.textContent = 'Pagar ahora';
+              manual.style.cssText = 'background:#1e3a8a;color:#fff;padding:12px 20px;border:0;border-radius:8px;font-size:16px;cursor:pointer;';
+              manual.onclick = (e) => { e.preventDefault(); try { VisanetCheckout.open(); } catch(e) { console.error(e); } };
+              form.appendChild(manual);
               document.body.classList.add('payment-ready');
-              console.log('✅ Botón manual creado');
             }
           }
-        }, 2000);
-      };
-      
-      script.onerror = function() {
-        console.error('❌ Error al cargar el script de Niubiz');
-        alert('Error al cargar la pasarela de pago. Por favor, inténtalo de nuevo.');
+        }, 1200);
       };
 
-      // Agregar el script al formulario
-      form.appendChild(script);
-    }
+      s.onerror = () => {
+        alert('No se pudo cargar la pasarela de pago. Intenta nuevamente.');
+      };
 
-    // NO redireccionar automáticamente - solo configurar Niubiz
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', setupNiubizCheckout);
-    } else {
-      setupNiubizCheckout();
-    }
-
-    // Interceptar envíos del formulario para debug
-    window.addEventListener('beforeunload', function(e) {
-      console.log('🔄 Página se está descargando/redirigiendo');
-    });
+      document.body.appendChild(s);
+    })();
   </script>
 </body>
 </html>
